@@ -168,7 +168,7 @@ end;
 
 var i,len:longint;
 begin
-  len:=0;
+  len:=100000;
   SetLength(a,len+1);
   Randomize(1);
   for i:=0 to len do
@@ -178,7 +178,7 @@ begin
   //work in O(log n)
   //getCountInInterval(l,r,v_min,v_max) - count in [l, r] with value [v_min,v_max]
   //getSumInInterval(l,r,v_min,v_max) - sum in [l, r] with value [v_min,v_max]
-  writeln(getCountInInterval(len div 2 div 2,len div 2,1,_MAX div 2));//17720
-  writeln(getSumInInterval(len div 2 div 2 ,len div 2,1,_MAX div 2));//4416648425704
+  writeln(getCountInInterval(len div 2 div 2,len div 2,1,_MAX div 2));
+  writeln(getSumInInterval(len div 2 div 2 ,len div 2,1,_MAX div 2));
 
 end.

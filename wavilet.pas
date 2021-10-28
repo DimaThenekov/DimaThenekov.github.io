@@ -1,4 +1,6 @@
-﻿const _MAX=10;
+﻿//Ralization Wavelet tree by dim0n4eg
+//Free use
+const _MAX=1000000000;
 type DinArr = array of int64;
      node = array of int64;
 var wavelet:array of node;
@@ -90,35 +92,28 @@ begin
   wavelet_high:=0;
   initNode(arr,start,stop,0,_MAX,0);
 end;
-function _count(x,i,ind:longint):longint;
-var otv:longint;
+function RankL0(i,ind:longint):longint;
 begin
-  if (x=1) then
-    otv := wavelet[ind][((length(wavelet[ind])-6)div 2) + 6+i]-1
-  else
-    otv :=i-(wavelet[ind][((length(wavelet[ind])-6)div 2) + 6+i]);
-  result :=otv;
-  write(x,' ',i,' ',ind,'=>');
-  writeln(otv);
+  result :=i-wavelet[ind][((length(wavelet[ind])-6)div 2)+6+i-1];
 end;
+function RankR0(i,ind:longint):longint;
+begin
+  result :=i-wavelet[ind][((length(wavelet[ind])-6)div 2)+6+i];
+end;
+function RankL1(i,ind:longint):longint;
+begin
+  result :=wavelet[ind][((length(wavelet[ind])-6)div 2)+6+i-1];
+end;
+function RankR1(i,ind:longint):longint;
+begin
+  result :=wavelet[ind][((length(wavelet[ind])-6)div 2)+6+i]-1;
+end;
+
 function getCountInNode(l,r,k,index:longint):longint;
-var LtCount,RtCount:longint;
 begin
 	if(l > r) then 
   begin
-	  getCountInNode := 0;
-	  exit;
-	end;
-	//if((length(wavelet[index])-6)div 2 <= r) then 
-  //begin
-  //  r:=((length(wavelet[index])-6)div 2) -1;
-  //end;
-	if (wavelet[index][2]=wavelet[index][3])then
-  begin
-	  if (k>=wavelet[index][3])then
-	     result := r-l+1
-	  else
-      result := 0;
+	  result := 0;
 	  exit;
 	end;
 	if (k>=wavelet[index][3])then
@@ -132,10 +127,7 @@ begin
 	  result := 0;
 	  exit;
 	end;
-  LtCount := wavelet[index][((length(wavelet[index])-6)div 2) + 6+l - 1];
-  RtCount := wavelet[index][((length(wavelet[index])-6)div 2) + 6+r-1];
-  inc(result,getCountInNode(l - LtCount,r - RtCount,k,wavelet[index][0]));
-  inc(result,getCountInNode(LtCount,RtCount-1,k,wavelet[index][1]));
+  result:=getCountInNode(RankL0(l,index),RankR0(r,index),k,wavelet[index][0])+getCountInNode(RankL1(l,index),RankR1(r,index),k,wavelet[index][1]);
 end;
 function getCountBeforeK(l,r,k:longint):longint;//count in [l, r] with value [...k]
 begin
@@ -145,30 +137,48 @@ function getCountInInterval(l,r,v_min,v_max:longint):longint;//count in [l, r] w
 begin
   result:=getCountBeforeK(l,r,v_max)-getCountBeforeK(l,r,v_min-1);
 end;
-function getSumBeforeK(l,r,k:longint):longint;//sum in [l, r] with value [...k]
+function getSumInNode(l,r,k,index:longint):int64;
 begin
-  
-  
-  
+	if(l > r) then 
+  begin
+	  result := 0;
+	  exit;
+	end;
+	if (k>=wavelet[index][3])then
+  begin
+	  result := wavelet[index][r+5]-wavelet[index][l+5-1];
+    writeln('+', wavelet[index][r+5]-wavelet[index][l+5-1]);
+	  exit;
+	end;
+	if (wavelet[index][2]>k)then
+  begin
+	  result := 0;
+	  exit;
+	end;
+  result:=getSumInNode(RankL0(l,index),RankR0(r,index),k,wavelet[index][0])+getSumInNode(RankL1(l,index),RankR1(r,index),k,wavelet[index][1]);
 end;
-function getSumInInterval(l,r,v_min,v_max:longint):longint;//sum in [l, r] with value [v_min,v_max]
+function getSumBeforeK(l,r,k:longint):int64;//sum in [l, r] with value [...k]
+begin
+	result:=getSumInNode(l,r,k,0);
+end;
+function getSumInInterval(l,r,v_min,v_max:longint):int64;//sum in [l, r] with value [v_min,v_max]
 begin
   result:=getSumBeforeK(l,r,v_max)-getSumBeforeK(l,r,v_min-1);
 end;
 
 var i,len:longint;
 begin
-  len:=5;
+  len:=0;
   SetLength(a,len+1);
   Randomize(1);
   for i:=0 to len do
     a[i]:=random(_MAX);
   arr2wavelet(a,0,len);
   //functions: 
-  //work for O(log n)
+  //work in O(log n)
   //getCountInInterval(l,r,v_min,v_max) - count in [l, r] with value [v_min,v_max]
   //getSumInInterval(l,r,v_min,v_max) - sum in [l, r] with value [v_min,v_max]
-  writeln(getCountBeforeK(0,0,1));
-  //writeln(_count(0,1,0));
+  writeln(getCountInInterval(len div 2 div 2,len div 2,1,_MAX div 2));//17720
+  writeln(getSumInInterval(len div 2 div 2 ,len div 2,1,_MAX div 2));//4416648425704
 
 end.

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ru" style="width: 100%;height:100%;">
+	<head>
+		<meta charset="UTF-8">
+		<title>Дерево отрезков с массовыми операциями</title>
+		<script type="text/javascript">
+			function SaveVal(a, b) {sessionStorage.setItem(a, b);}
+			function GetVal(a, b) {return (null!=sessionStorage.getItem(a))?sessionStorage.getItem(a):b;}
+			
+		    var canvas,ctx,slider,area,outArea;
+			var tree=[];
+			var treeInp=[];
+			var commands=[];
+			var log=[];
+			function _parent(n)
+			{
+				return Math.floor((n-1)/2);
+			}
+			function _childs(n)
+			{
+				return [n*2+1,n*2+2];
+			}
+			var treePos=[];
+			function drawNode(x,y,x2,y2,lvl,h,el,objLog)
+			{
+				var posX=canvas.clientWidth/2-(canvas.clientWidth/2-x)*(lvl)*0.15;
+				var posXnext=canvas.clientWidth/2-(canvas.clientWidth/2-x)*(lvl+1)*0.15;
+				var posY=y;
+				var posX2=canvas.clientWidth/2-(canvas.clientWidth/2-x2)*(lvl)*0.15;
+				var posY2=y2;
+				if (treePos[lvl][0]>posX)
+					treePos[lvl]=[posX,posY];
+				if (treePos[lvl+1][0]>posXnext)
+					treePos[lvl+1]=[posXnext,posY+h];
+				if (objLog[el]==undefined)
+					ctx.strokeStyle = '#00FF00'; 
+				else
+					if (objLog[el][0]==0)
+						ctx.strokeStyle = '#FFFF00';
+					else
+						if (objLog[el][0]==1)
+							ctx.strokeStyle = '#FFAA00';
+						else
+							ctx.strokeStyle = '#FF0000';
+				ctx.beginPath();
+					ctx.rect(posX+2, posY+2, posX2-posX-4, posY2-posY-4);
+				ctx.stroke();
+				ctx.font = h/4+"px Arial"; 
+				if (tree[el][1]==0)
+					ctx.fillStyle = '#000000';
+				else
+					ctx.fillStyle = '#FF0000';
+				ctx.fillText('+: '+tree[el][1],posX+10, posY+h/3*2);
+				ctx.fillStyle = '#000000'; 
+				ctx.fillText('s: '+tree[el][0],posX+10, posY+h/3);
+				ctx.font = h/6+"px Arial"; 
+				if (objLog[el]!=undefined)
+					ctx.fillText(objLog[el][1]+1,posX2-20, posY2-4);
+			}
+			function drawTree(el,lx,rx,y,h,lvl,objLog)
+			{
+				if (el>=tree.length)
+					return;
+				if (lvl>6)
+					return;
+				if (el==0)
+				{
+					treePos=[];
+					for (var i=0;i<32;i++)
+						treePos[i]=[1000000,1000000];
+				}
+				drawNode(lx,y,rx,y+h,lvl,h,el,objLog);
+				
+				drawTree(_childs(el)[0],lx,(rx+lx)/2,y+h,h*0.9,lvl+1,objLog);
+				drawTree(_childs(el)[1],(rx+lx)/2,rx,y+h,h*0.9,lvl+1,objLog);
+			}
+			
+			function draw()
+			{
+				ctx.canvas.height=canvas.clientHeight;
+				ctx.canvas.width=canvas.clientWidth;
+				DOJOB(myslider.value);
+				var objLog={};
+				for (var i=0 ;i<log.length;i++)
+				{
+					objLog[log[i][1]]=[log[i][0],i];
+				}
+				var size=Math.min(canvas.clientHeight-50,canvas.clientWidth-50)/1000;
+				var sizeTree=(canvas.clientWidth-270)/(Math.min(tree.length,100));
+				var sizeTreeInp=(canvas.clientWidth-270)/(Math.min(treeInp.length,50));
+				var pos={'x':canvas.clientWidth/2,'y':canvas.clientHeight/2};
+				
+				ctx.strokeStyle = '#000000'; 
+				ctx.font = "23px Arial";
+				if (treeInp.length>50)
+					ctx.fillText("Input array(overflow):", 20,40);
+				else
+					ctx.fillText("Input array:", 20,40);
+				if (sizeTree.length>100)
+					ctx.fillText("Tree(overflow):",20,85);
+				else
+					ctx.fillText("Tree in memory:",20,85);
+				if (myslider.value==0){
+					ctx.fillText("Procedure: buildTree O(2n)",20,135);
+				}else
+				if (myslider.value>commands.length)
+				{
+					ctx.fillText("Procedure: recalculation O(2n)",20,135);
+				}else
+				{
+					if (commands[myslider.value-1][0]==0)
+						ctx.fillText("Procedure: add("+commands[myslider.value-1][1]+','+commands[myslider.value-1][2]+','+commands[myslider.value-1][3]+') O(log n)',20,135);
+					else
+						ctx.fillText("Function: getSum("+commands[myslider.value-1][1]+','+commands[myslider.value-1][2]+') O(log n)',20,135);
+				}
+				for (var i=0;i<Math.min(treeInp.length,50);i++)
+				{
+					ctx.fillText(treeInp[i], 250+i*sizeTreeInp+6,40);
+					
+					ctx.beginPath();
+						ctx.lineWidth = 3; 
+						ctx.rect(250+i*sizeTreeInp, 10, sizeTreeInp, 40);
+					ctx.stroke();
+				}
+				for (var i=0;i<Math.min(tree.length,100);i++)
+				{
+					ctx.fillText(tree[i][0], 250+i*sizeTree+6,85);
+					ctx.strokeStyle = '#000000'; 
+					ctx.beginPath();
+						ctx.lineWidth = 3; 
+						ctx.rect(250+i*sizeTree, 55, sizeTree, 40);
+					ctx.stroke();
+					
+					ctx.fillText(tree[i][1], 250+i*sizeTree+6+sizeTree/2,85);
+					ctx.strokeStyle = '#FF0000'; 
+					ctx.beginPath();
+						ctx.lineWidth = 1; 
+						ctx.rect(250+i*sizeTree+sizeTree/2+2, 57, sizeTree/2-4, 36);
+					ctx.stroke();
+				}
+					
+				ctx.font = "50px Arial";
+				if (sizeTree.length>100)
+					ctx.fillText("Christmas tree(overflow)",pos.x-150,100);
+				else
+					ctx.fillText("Christmas tree",pos.x-150,150);
+					
+				ctx.strokeStyle = '#00FF00'; 
+				ctx.lineWidth = 1; 
+				drawTree(0,100,canvas.clientWidth-100,400,canvas.clientHeight*0.1,1,objLog);
+				var i=1;
+				ctx.lineWidth = 5; 
+				ctx.beginPath();
+				ctx.moveTo(pos.x, 255);
+				while (treePos[i][0]<999999)
+				{
+					
+					ctx.lineTo(treePos[i][0]-30, treePos[i][1]+5);
+					ctx.lineTo(treePos[i][0]-10, treePos[i][1]+5);
+					i++;
+				}
+				ctx.stroke(); 
+				
+				i=1;
+				ctx.beginPath();
+				ctx.moveTo(pos.x, 255);
+				while (treePos[i][0]<999999)
+				{
+					
+					ctx.lineTo(canvas.clientWidth-treePos[i][0]+30, treePos[i][1]+5);
+					ctx.lineTo(canvas.clientWidth-treePos[i][0]+10, treePos[i][1]+5);
+					i++;
+				}
+				ctx.stroke(); 
+				
+				ctx.beginPath();
+					ctx.moveTo(treePos[i-1][0]-10, treePos[i-1][1]+5);
+					ctx.lineTo(canvas.clientWidth-treePos[i-1][0]+10, treePos[i-1][1]+5);
+				ctx.stroke(); 
+				
+				ctx.strokeStyle = '#964B00'; 
+				ctx.lineWidth = 5; 
+				ctx.beginPath();
+				ctx.moveTo(pos.x-40, treePos[i-1][1]+10);
+				ctx.lineTo(pos.x-40, treePos[i-1][1]+90);
+				ctx.lineTo(pos.x+40, treePos[i-1][1]+90);
+				ctx.lineTo(pos.x+40, treePos[i-1][1]+10);
+				ctx.lineTo(pos.x-40, treePos[i-1][1]+10);
+				ctx.stroke(); 
+				
+				/*var posСup=[];
+				var GroopPosСup=[[0,1,8,9],[2,3,10,11],[4,5,12,13],[6,7,14,15]];
+				var NeedPosСup=[];
+				for (var i=0;i<16;i++)
+					NeedPosСup.push(false);
+				
+				for (var i=+Math.PI*2/16;i<Math.PI*2;i+=Math.PI*2/8)
+					posСup.push([Math.cos(i)*(65),Math.sin(i)*(65)]);
+				
+				for (var i=0;i<Math.PI*2;i+=Math.PI*2/8)
+					posСup.push([Math.cos(i)*(75-32.5),Math.sin(i)*(75-32.5)]);
+				var n=0;
+				for (var i=0;i<4;i++)
+				{
+					//NeedPosСup[GroopPosСup[i][0]]=true;
+					//NeedPosСup[GroopPosСup[i][1]]=true;
+					n++;
+					n++;
+				}
+				
+				
+				ctx.globalAlpha = 0.5;
+				//ctx.drawImage(img_pi, pos.x-size*49,pos.y-size*49, size*98, size*98);
+				ctx.globalAlpha = 1;
+				
+				ctx.beginPath();
+					ctx.lineWidth = size*5; 
+					ctx.arc(pos.x,pos.y,size*75, 0, Math.PI*2);
+				ctx.stroke();
+				ctx.strokeStyle = '#FFEE00'; 
+				ctx.beginPath();
+					ctx.lineWidth = size*1; 
+					ctx.rect(pos.x-size*10,pos.y-size*10, size*20, size*20);
+				ctx.stroke();
+				for (var i=0;i<posСup.length;i++)
+				{
+					console.log(i);
+					ctx.strokeStyle = '#FFEE00'; 
+					ctx.beginPath();
+						ctx.lineWidth = size*0.5; 
+						ctx.arc(pos.x+size*posСup[i][0],pos.y+size*posСup[i][1],size*3.5, 0, Math.PI*2);
+					ctx.stroke();
+					if (NeedPosСup[i])
+					{
+						ctx.beginPath();
+							ctx.fillStyle = '#FF0000'; 
+							ctx.arc(pos.x+size*posСup[i][0],pos.y+size*posСup[i][1],size*2.5, 0, Math.PI*2);
+						ctx.fill();
+						ctx.strokeStyle = '#FF0000'; 
+						ctx.beginPath();
+							ctx.lineWidth = size*0.2; 
+							ctx.arc(pos.x+size*posСup[i][0],pos.y+size*posСup[i][1],size*4.5, 0, Math.PI*2);
+						ctx.stroke();
+					}
+					ctx.fillStyle = '#000000'; 
+					ctx.font = Math.floor(size*2.7)+"px serif";
+					ctx.fillText("№"+Math.floor(i/10)+i%10, pos.x+size*posСup[i][0]-Math.floor(size*2.7),pos.y+size*posСup[i][1]+Math.floor(size*2.7)/3);
+					
+				}*/
+				ctx.fillStyle = '#FFEE00';
+				var posStar=[];
+				for (var i=-Math.PI*2/10/2;i<Math.PI*2;i+=Math.PI*2/5)
+				{
+					posStar.push([Math.cos(i)*(65),Math.sin(i)*(65)]);
+					posStar.push([Math.cos(i+Math.PI*2/10)*(25),Math.sin(i+Math.PI*2/10)*(25)]);
+				}
+					
+				ctx.beginPath();
+				ctx.moveTo(pos.x+posStar[0][0], 230+posStar[0][1]);
+				for (var i=1;i<posStar.length;i++)
+				{
+					ctx.lineTo(pos.x+posStar[i][0], 230+posStar[i][1]);
+				}
+				ctx.fill(); 
+			}
+			function treeAdd2(l,r,el,elL,elR,add)
+			{
+				if (el>=tree.length)
+					return 0;
+				if (elL==l && r==elR)
+				{
+					log.push([0,el]);
+					sumRecalculation(el,elR-elL+1);
+					tree[el][1]+=add;
+				}else
+				if (elL<=l && r<=elR)
+				{
+					sumRecalculation(el,elR-elL+1);
+					tree[el][0]+=(r-l+1)*add;
+					
+					var mid=Math.floor((elL + elR + 1)/2);
+					if (r<mid)
+					{
+						log.push([1,el]);
+						return treeAdd2(l,r,_childs(el)[0],elL,mid - 1,add);
+					}
+					else
+					if (mid<=l)
+					{
+						log.push([1,el]);
+						return treeAdd2(l,r,_childs(el)[1],mid,elR,add);
+					}
+					else
+					{
+						log.push([2,el]);
+						return treeAdd2(l,mid-1,_childs(el)[0],elL,mid - 1,add)+treeAdd2(mid,r,_childs(el)[1],mid,elR,add);
+					}
+				}else
+				{
+					tree[el][1]+=1000;
+					return 0;
+				}
+			}
+			function treeAdd(l,r,add)
+			{
+				log=[];
+				return treeAdd2(l,r,0,1,treeInp.length,add);
+			}
+			function sumRecalculation(el,elCount)
+			{
+				if (_childs(el)[0]<tree.length)
+					tree[_childs(el)[0]][1]+=tree[el][1];
+				
+				if (_childs(el)[1]<tree.length)
+					tree[_childs(el)[1]][1]+=tree[el][1];
+				
+				tree[el][0]+=elCount*tree[el][1];
+				tree[el][1]=0;
+			}
+			function treeGetSum2(l,r,el,elL,elR)
+			{
+				if (el>=tree.length)
+					return 0;
+				if (elL==l && r==elR)
+				{
+					log.push([0,el]);
+					sumRecalculation(el,elR-elL+1);
+					return tree[el][0];
+				}else
+				if (elL<=l && r<=elR)
+				{
+					sumRecalculation(el,elR-elL+1);
+					var mid=Math.floor((elL + elR + 1)/2);
+					if (r<mid)
+					{
+						log.push([1,el]);
+						return treeGetSum2(l,r,_childs(el)[0],elL,mid - 1);
+					}
+					else
+					if (mid<=l)
+					{
+						log.push([1,el]);
+						return treeGetSum2(l,r,_childs(el)[1],mid,elR);
+					}
+					else
+					{
+						log.push([2,el]);
+						return treeGetSum2(l,mid-1,_childs(el)[0],elL,mid - 1)+treeGetSum2(mid,r,_childs(el)[1],mid,elR);
+					}
+				}else
+				{
+					tree[el][1]+=1000;
+					return 0;
+				}
+			}
+			function treeGetSum(l,r)
+			{
+				log=[];
+				return treeGetSum2(l,r,0,1,treeInp.length);
+			}
+			
+			function DOJOB(n)
+			{
+				outArea.value='';
+				tree=[];
+				log=[];
+				// Fill Tree
+				var tmp=1;
+				while (tmp<treeInp.length)
+					tmp*=2;
+				for (var i=treeInp.length;i<tmp;i++)
+					treeInp.push(0);
+				
+				for (var i=0;i<treeInp.length*2-1;i++)
+					tree.push([0,0]);
+				for (var i=treeInp.length-1;i<treeInp.length*2-1;i++)
+					tree[i]=[treeInp[i-treeInp.length+1],0];
+				for (var i=treeInp.length*2-2;i>0;i--)
+					tree[_parent(i)][0]+=tree[i][0];
+				// Work
+				tmp=commands.length;
+				if (n!=undefined)
+					tmp=Math.min(n,commands.length);
+				for (var i=0;i<tmp;i++)
+				{
+					//tree[0][0]=tree[i][0];
+					if (commands[i][0]==0)
+						treeAdd(commands[i][1],commands[i][2],commands[i][3]);
+					if (commands[i][0]==1)
+						outArea.value+=treeGetSum(commands[i][1],commands[i][2])+'\n';
+				}			
+				if (n==undefined)
+				{
+					myslider.max=commands.length+1;
+					myslider.value=myslider.max;
+				}else
+				{
+					if (n>commands.length)
+					{
+						log=[];
+						for (var i=0;i<treeInp.length*2-1;i++)
+							sumRecalculation(i,1);
+						for (var i=0;i<treeInp.length-1;i++)
+							tree[i][0]=0;
+						for (var i=treeInp.length*2-2;i>0;i--)
+							tree[_parent(i)][0]+=tree[i][0];
+					}	
+				}
+			}
+			function onedit()
+			{
+				var splS=area.value.trim().replace(/[ ]+/g,' ').split('\n');
+				treeInp=[];
+				commands=[];
+				var err=!1;
+				
+				for (var i=0;i<splS.length;i++)
+				if (i)
+				{
+					var lineSi=splS[i].trim().split(' ');
+					if (lineSi.length==1 && lineSi[0]=='')
+					{
+					}else
+					if (lineSi[0]=='add')
+					{
+						if (lineSi.length!=4){err=!0;continue;}
+						var _command=[0,parseInt(lineSi[1]),parseInt(lineSi[2]),parseInt(lineSi[3])];
+						if (_command[1]+''!=lineSi[1] || _command[2]+''!=lineSi[2] || _command[3]+''!=lineSi[3] || _command[1]!=_command[1] || _command[2]!=_command[2] || _command[3]!=_command[3]){err=!0;continue;}
+						if (_command[2]<=0 || _command[2]>treeInp.length || _command[2]<=0 || _command[2]>treeInp.length){err=!0;continue;}
+						commands.push(_command);
+					}else
+					if (lineSi[0]=='getsum')
+					{
+						if (lineSi.length!=3){err=!0;continue;}
+						var _command=[1,parseInt(lineSi[1]),parseInt(lineSi[2])];
+						if (_command[1]+''!=lineSi[1] || _command[2]+''!=lineSi[2] || _command[1]!=_command[1] || _command[2]!=_command[2]){err=!0;continue;}
+						if (_command[2]<1 || _command[2]>treeInp.length || _command[2]<1 || _command[2]>treeInp.length){err=!0;continue;}
+						commands.push(_command);
+					}else
+					{
+						err=!0;
+					}
+				}else
+				{
+					var lineSi=splS[i].trim().split(' ');
+					if (lineSi.length<2){err=!0;continue;}
+					
+					for (var j=0;j<lineSi.length;j++)
+					{
+						var _el=parseInt(lineSi[j]);
+						if (_el+''!=lineSi[j] || _el!=_el){err=!0;continue;}
+						treeInp.push(_el);
+					}
+				}
+				if (err)
+					area.style.backgroundColor='rgb(255,200,200)';
+				else
+				{
+					area.style.backgroundColor='';
+					DOJOB();
+					draw();
+				}
+				//console.log(err,treeInp,commands);
+			}
+			
+			function run()
+			{
+				canvas = document.getElementById('map');
+				ctx = canvas.getContext('2d');
+				slider = document.getElementById('myslider');
+				area = document.getElementById('myinput');
+				outArea = document.getElementById('myoutput');
+				area.addEventListener('input', function() {
+					onedit();
+				}, false);
+				onedit();
+			}
+		</script>
+	</head>
+	<body onload="run();draw();window.addEventListener('resize', draw, true);" style="margin: 0px;width: 100%;height:100%;font-family: 'Open Sans', sans-serif;overflow: hidden;">
+		<canvas id="map" style="position: absolute;top: 0px;left: 20%;width: 80%;height:100%;">
+		</canvas>
+		<textarea id="myinput" style="position: absolute;top: 0px;left: 0px;resize:none;width: 20%;height: 70%;font-size: 21px;">1 2 3 4 5 6 7 8
+add 1 2 5
+add 4 8 10
+getsum 2 8
+add 2 3 -5
+add 1 2 -10
+getsum 1 4
+</textarea>
+		<textarea id="myoutput" style="position: absolute;top: 70%;left: 0px;resize:none;width: 20%;height: 30%;font-size: 21px;" readonly></textarea>
+		<input id="myslider" type="range" min="0" max="1000000" style="position: absolute;width: 78%;left: 21%;bottom: 10px;right: 1%;" oninput="draw()" onchange="draw()">
+	</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru" style="width: 100%;height:100%;">
+	<head>
+		<meta charset="UTF-8">
+		<title>% региона</title>
+		<script type="text/javascript">
+			function SaveVal(a, b) {sessionStorage.setItem(a, b);}
+			function GetVal(a, b) {return (null!=sessionStorage.getItem(a))?sessionStorage.getItem(a):b;}
+			function ff(){
+				document.getElementById('myslider').value=(new Date()-0);
+			}
+			function f(x){
+				return x/4+0.5+0.05*Math.sin(x*4-0.1)+0.02*Math.sin(x*9-0.3)-0.08*Math.sin(x*6-0.7);
+			}
+			setInterval(function ()
+				{
+					var v0='Данные на '+new Date(parseInt(document.getElementById('myslider').value)).toLocaleString();
+					if (document.getElementById('date').innerHTML!=v0)
+						document.getElementById('date').innerHTML=v0;
+					if (Math.abs(new Date(parseInt(document.getElementById('myslider').value)) - new Date())<4*60*60*1000)
+					{
+						document.getElementById('myslider').value=(new Date()-0);
+					}
+					var k=(document.getElementById('myslider').value-document.getElementById('myslider').min)/(document.getElementById('myslider').max-document.getElementById('myslider').min);
+					var vovav=f(k)*100;
+					var v1=Math.round(vovav*100000)/100000+'%';
+					var v2=Math.round(((100-vovav)/3*1)*100000)/100000+'%';
+					var v3=Math.round(((100-vovav)/3*2)*100000)/100000+'%';
+					if (document.getElementById('vova').innerHTML!=v1)
+						document.getElementById('vova').innerHTML=v1;
+					if (document.getElementById('oleg').innerHTML!=v2)
+						document.getElementById('oleg').innerHTML=v2;
+					if (document.getElementById('dima').innerHTML!=v3)
+						document.getElementById('dima').innerHTML=v3;
+				},50);
+				
+		</script>
+	</head>
+	<body onload="ff()" style="margin: 0px;width: 100%;font-family: 'Open Sans', sans-serif;">
+		<div style="border: 1px solid black; padding: 10px; margin: 5%;margin-bottom: 40px;margin-top: 40px;"><div style="font-size: 40px;text-align: center; padding: 2%; background: #fc0;width: 96%;" id="date">Данные на 00:00 00.00.0000</div></div>
+		<div style="border: 1px solid black; padding: 10px; margin: 5%;margin-bottom: 40px;margin-top: 40px;"><div style="font-size: 40px;text-align: center; padding: 2%; background: #fc0;width: 96%;">Вероятность абсолютной победы <b>Вовы</b>: <b id="vova">10.10000%</b></div></div>
+		<div style="border: 1px solid black; padding: 10px; margin: 5%;margin-bottom: 40px;margin-top: 40px;"><div style="font-size: 40px;text-align: center; padding: 2%; background: #fc0;width: 96%;">Вероятность абсолютной победы <b>Олега</b>: <b id="oleg">10.10000%</b></div></div>
+		<div style="border: 1px solid black; padding: 10px; margin: 5%;margin-bottom: 40px;margin-top: 40px;"><div style="font-size: 40px;text-align: center; padding: 2%; background: #fc0;width: 96%;">Вероятность абсолютной победы <b>Димы</b>: <b id="dima">10.10000%</b></div></div>
+		<input id="myslider" type="range" min="1640984400000" max="1642417200000" style="position: fixed;width: 80%;left: 10%;bottom: 10px;right: 10%;">
+	</body>
+</html>

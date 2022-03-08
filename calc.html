@@ -174,6 +174,19 @@
 				var basenums=[0n,1n,2n,3n,4n,5n,6n,7n,8n,9n,10n,11n,12n,13n,14n,15n];
 				var basestrings=['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'];
 				var v = (10n**BigInt(cl_width))/base;
+				
+				if (base==1)
+				{
+					if (!(/^[1]*[.]?[1]*$/.test(n)))return;
+					var v2=n.split('.')[0].length;
+					if (n.indexOf('.1')+1)
+					{
+						var v3=n.split('.')[1].length.toString(2).toString(2).split('').reverse().join('');
+						//console.log(v3);
+						return BigInt(v2)*v+cl_str2numbase('.'+v3,2n);
+					}else
+						return BigInt(v2)*v;
+				}
 				var res = 0n;
 				if (n.indexOf('.')>=0)
 				{
@@ -222,7 +235,7 @@
 					return cl_str2numbase(n,16n);
 				}else if (/^[0123456789]+b[0123456789abcdef]*[.]?[0123456789abcdef]*$/.test(n)) {
 					var __base=BigInt(n.split('b')[0]);
-					if (__base>=2n && __base<=16n)
+					if (__base>=1n && __base<=16n)
 					{
 						n=n.split('b')[1];
 						return cl_str2numbase(n,__base);
@@ -270,6 +283,33 @@
 					{
 						var basestrings=['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'];
 						var nb=BigInt(needbase.value);
+						var nb2=BigInt(needbase.value);
+						if (nb<2n)
+						{
+							var n2=(n / (10n**BigInt(cl_width)));
+							if (n2>10000n) return 'NaN';
+							var s='';
+							for (var i=0n;i<n2;i++) s+='1';
+							n2=n % (10n**BigInt(cl_width));
+							var n3=0n;
+							var iter=0;
+							var __one=cl_str2num('1');
+							while (n2>=0n)
+							{
+								n2*=2n;
+								if (n2>=__one)
+									n3+=2n**13n;
+								n3=n3/2n;
+								n2=n2%__one;
+								if (iter++>11)break;
+							}
+							if (n3!=0n)
+							{
+								s+='.';
+								for (var i=0n;i<n3;i++) s+='1';
+							}
+							return '1b'+s
+						}
 						//debugger;
 						var s='';
 						var n2=(n / (10n**BigInt(cl_width)));
@@ -844,21 +884,22 @@
 				outFormula,
 				stack,
 				operators;
-				operators = ['~~', '**', '%', '//', '/', '*', '-', '+', '>>', '<<', '&', '^', '|'];
+				operators = ['~~', '!', '**', '%', '//', '/', '*', '-', '+', '>>', '<<', '&', '^', '|'];
 				ParseOperators = [
 					[], // ~~(-)
-					['~~', '**'], // **
-					['~~', '**', '%', '//', '/', '*'], // %
-					['~~', '**', '%', '//', '/', '*'], // //
-					['~~', '**', '%', '//', '/', '*'], // /
-					['~~', '**', '%', '//', '/', '*'], // *
-					['~~', '**', '%', '//', '/', '*', '-', '+'], // -
-					['~~', '**', '%', '//', '/', '*', '-', '+'], // +
-					['~~', '**', '%', '//', '/', '*', '-', '+', '>>', '<<'], // >>
-					['~~', '**', '%', '//', '/', '*', '-', '+', '>>', '<<'], // <<
-					['~~', '**', '%', '//', '/', '*', '-', '+', '>>', '<<', '&'], // &
-					['~~', '**', '%', '//', '/', '*', '-', '+', '>>', '<<', '&', '^'], // ^
-					['~~', '**', '%', '//', '/', '*', '-', '+', '>>', '<<', '&', '^', '|'], // |
+					['~~', '!'], // !
+					['~~', '!', '**'], // **
+					['~~', '!', '**', '%', '//', '/', '*'], // %
+					['~~', '!', '**', '%', '//', '/', '*'], // //
+					['~~', '!', '**', '%', '//', '/', '*'], // /
+					['~~', '!', '**', '%', '//', '/', '*'], // *
+					['~~', '!', '**', '%', '//', '/', '*', '-', '+'], // -
+					['~~', '!', '**', '%', '//', '/', '*', '-', '+'], // +
+					['~~', '!', '**', '%', '//', '/', '*', '-', '+', '>>', '<<'], // >>
+					['~~', '!', '**', '%', '//', '/', '*', '-', '+', '>>', '<<'], // <<
+					['~~', '!', '**', '%', '//', '/', '*', '-', '+', '>>', '<<', '&'], // &
+					['~~', '!', '**', '%', '//', '/', '*', '-', '+', '>>', '<<', '&', '^'], // ^
+					['~~', '!', '**', '%', '//', '/', '*', '-', '+', '>>', '<<', '&', '^', '|'], // |
 				];
 				var operator2function={
 					'%':['cl_mod',cl_mod],
@@ -1085,6 +1126,22 @@
 								var v1_2 = stack2.pop();
 								stack.push('-(' + v1 + ')');
 								stack2.push(-v1_2);
+							} else
+							if (outFormula[i] == '!') {
+								if (stack.length < 1) {
+									persing_log += 'Неправильное использование оператора "!". \r\n'
+									return;
+								}
+								var v1 = stack.pop();
+								var v1_2 = stack2.pop();
+								var v=cl_nf('fact',[v1_2]);
+								if (v==undefined)
+								{
+									persing_log += 'Значение '+outFormula[i]+' неопределено\r\n'
+									return;
+								}
+								stack.push('cl_nf(\'fact\',[' + v1 + '])');
+								stack2.push(v);
 							} else
 							if (outFormula[i] == '**') {
 								if (stack.length < 2) {
@@ -1409,7 +1466,7 @@
 					cl_width=Math.max(-precision.value+__rounding_width,1);
 				else
 					cl_width=Math.max(-precision.value,1);
-				needbase.value=Math.min(Math.max(needbase.value,2),16);
+				needbase.value=Math.min(Math.max(needbase.value,1),16);
 				var t=new Date();
 				if (1)
 				{
@@ -1459,6 +1516,10 @@
 							output_inf_fraction.textContent = cl_num2str(otv[1][0],5).trim();
 							output_fractions.textContent = cl_num2str(otv[1][0],7).trim();
 							output_roman.textContent = cl_num2str(otv[1][0],4).trim();
+							
+							
+							if (new Date()-t<1000)
+								window.location.hash='#'+area.value;
 						}
 					}
 				}
@@ -1492,7 +1553,10 @@
 				precision.addEventListener('input', onupdate, false);
 				rounding.addEventListener('input', onupdate, false);
 				needbase.addEventListener('input', onupdate, false);
-				area.value=GetVal('formula_data','2+2');
+				if (window.location.hash.slice(1)!='' && window.location.hash.slice(1)!=GetVal('formula_data','2+2') && confirm('Адрес содержит формулу. Хотите ею воспользоваться?'))
+					area.value=window.location.hash.slice(1);
+				else
+					area.value=GetVal('formula_data','2+2');
 				precision.value=parseInt(GetVal('precision_data','-1000'));
 				rounding.checked=GetVal('rounding_data','true')!='';
 				needbase.value=GetVal('needbase_data','2');
@@ -1636,75 +1700,81 @@ table tr:last-child td:last-child {
 						</tr>
 						<tr>
 							<td>|</td>
-							<td>8<br>(низший)</td>
+							<td>9<br>(низший)</td>
 							<td>Битовое ИЛИ *</td>
 							<td style="background:#00FF0018;">O(log max(a,b))</td>
 						</tr>
 						<tr>
 							<td>^</td>
-							<td>7</td>
+							<td>8</td>
 							<td>Битовое исключающее ИЛИ (XOR) *</td>
 							<td style="background:#00FF0018;">O(log max(a,b))</td>
 						</tr>
 						<tr>
 							<td>&</td>
-							<td>6</td>
+							<td>7</td>
 							<td>Битовое И *</td>
 							<td style="background:#00FF0018;">O(log max(a,b))</td>
 						</tr>
 						<tr>
 							<td>&lt;&lt;</td>
-							<td>5</td>
+							<td>6</td>
 							<td>Битовый сдвиг влево *</td>
 							<td style="background:#00FF0018;">O(log a ∙ b)</td>
 						</tr>
 						<tr>
 							<td>&gt;&gt;</td>
-							<td>5</td>
+							<td>6</td>
 							<td>Битовый сдвиг вправо *</td>
 							<td style="background:#00FF0018;">O(log a ∙ b)</td>
 						</tr>
 						<tr>
 							<td>+</td>
-							<td>4</td>
+							<td>5</td>
 							<td>Сложение</td>
 							<td style="background:#00FF0018;">O(log max(a,b))</td>
 						</tr>
 						<tr>
 							<td>-</td>
-							<td>4</td>
+							<td>5</td>
 							<td>Вычитание</td>
 							<td style="background:#00FF0018;">O(log max(a,b))</td>
 						</tr>
 						<tr>
 							<td>*</td>
-							<td>3</td>
+							<td>4</td>
 							<td>Умножение</td>
 							<td style="background:#00FF0018;">O(log max(a,b) ∙ log log max(a,b))</td>
 						</tr>
 						<tr>
 							<td>/</td>
-							<td>3</td>
+							<td>4</td>
 							<td>Деление</td>
 							<td style="background:#00FF0018;">O(log max(a,b) ∙ log log max(a,b)) ?</td>
 						</tr>
 						<tr>
 							<td>//</td>
-							<td>3</td>
+							<td>4</td>
 							<td>Целочисленное деление *</td>
 							<td style="background:#00FF0018;">O(log max(a,b) ∙ log log max(a,b)) ?</td>
 						</tr>
 						<tr>
 							<td>%</td>
-							<td>3</td>
+							<td>4</td>
 							<td>Остаток от деления *</td>
 							<td style="background:#00FF0018;">O(log max(a,b) ∙ log log max(a,b)) ?</td>
 						</tr>
 						<tr>
 							<td>**</td>
-							<td>2</td>
+							<td>3</td>
 							<td>Возведение в степень</td>
 							<td style="background:linear-gradient(#00ff0018 30%,#FF000018 70%);">Для целых:<br>O(log a ∙ b)<br>Для вещественных:<br>O(log<sup>2</sup> a)</td>
+						</tr>
+						<tr>
+							<td>!</td>
+							<td>2</td>
+							<td>Работает как <var>fact(a)</var></td>
+							<td style="background:#FF000018;">O(a<sup>2</sup>)</td>
 						</tr>
 						<tr>
 							<td>- (~~)</td>
@@ -1770,102 +1840,102 @@ table tr:last-child td:last-child {
 						<tr>
 							<td>min(arg...)</td>
 							<td>Возвращает наименьшее из двух или более чисел</td>
-							<td style="background:#00FF0018;">O(log n)</td>
+							<td style="background:#00FF0018;">O(arg.length)</td>
 						</tr>
 						<tr>
 							<td>max(arg...)</td>
 							<td>Возвращает наибольшее из двух или более чисел</td>
-							<td style="background:#00FF0018;">O(log n)</td>
+							<td style="background:#00FF0018;">O(arg.length)</td>
 						</tr>
 						<tr class="topline topline2">
-							<td>abs(n)</td>
+							<td>abs(a)</td>
 							<td>Абсолютное значение числа (модуль числа)</td>
-							<td style="background:#00FF0018;">O(log n)</td>
+							<td style="background:#00FF0018;">O(log a)</td>
 						</tr>
 						<tr class="topline topline2">
-							<td>ceil(n)</td>
+							<td>ceil(a)</td>
 							<td>Округляет аргумент до ближайшего большего целого</td>
-							<td style="background:#00FF0018;">O(log n)</td>
+							<td style="background:#00FF0018;">O(log a)</td>
 						</tr>
 						<tr>
-							<td>floor(n)</td>
+							<td>floor(a)</td>
 							<td>Округляет аргумент до ближайшего меньшего целого</td>
-							<td style="background:#00FF0018;">O(log n)</td>
+							<td style="background:#00FF0018;">O(log a)</td>
 						</tr>
 						<tr>
-							<td>round(n)</td>
+							<td>round(a)</td>
 							<td>Возвращает число, округлённое к ближайшему целому</td>
-							<td style="background:#00FF0018;">O(log n)</td>
+							<td style="background:#00FF0018;">O(log a)</td>
 						</tr>
 						<tr>
-							<td>trunc(n)</td>
+							<td>trunc(a)</td>
 							<td>Возвращает целую часть числа путём удаления всех дробных знаков</td>
-							<td style="background:#00FF0018;">O(log n)</td>
+							<td style="background:#00FF0018;">O(log a)</td>
 						</tr>
 						<tr class="topline topline2">
-							<td>sign(n)</td>
+							<td>sign(a)</td>
 							<td>Возвращает 1 0 -1, если число положительное, ноль или отрицательное соответственно</td>
 							<td style="background:#00FF0018;">O(1)</td>
 						</tr>
 						<tr class="topline topline2">
-							<td>sqrt(n)</td>
+							<td>sqrt(a)</td>
 							<td>Квадратный корень</td>
-							<td style="background:#FFFF0018;">O(log n ∙ log sqrt n)</td>
+							<td style="background:#FFFF0018;">O(log a ∙ log sqrt a)</td>
 						</tr>
 						<tr>
-							<td>sqrt&lt;i&gt;(n)</td>
-							<td>Корень i-й степени <var style="font-style: inherit;">i &#8712; &#8469;</var></td>
-							<td style="background:#FF000018;">O(log<sup>2</sup> n)</td>
+							<td>sqrt&lt;b&gt;(a)</td>
+							<td>Корень b-й степени <var style="font-style: inherit;">b &#8712; &#8469;</var></td>
+							<td style="background:#FF000018;">O(log<sup>2</sup> a)</td>
 						</tr>
 						<tr>
-							<td>sqrt(n, m)</td>
-							<td>Корень m-й степени</td>
-							<td style="background:#FF000018;">O(log<sup>2</sup> n)</td>
+							<td>sqrt(a, b)</td>
+							<td>Корень b-й степени</td>
+							<td style="background:#FF000018;">O(log<sup>2</sup> a)</td>
 						</tr>
 						<tr class="topline topline2">
-							<td>log&lt;i&gt;(n)</td>
-							<td>Логарифм с основанием <var style="font-style: inherit;">i &#8712; &#8469;</var></td>
-							<td style="background:#FF000018;">O(log<sup>2</sup> n)</td>
+							<td>log&lt;b&gt;(a)</td>
+							<td>Логарифм с основанием <var style="font-style: inherit;">b &#8712; &#8469;</var></td>
+							<td style="background:#FF000018;">O(log<sup>2</sup> a)</td>
 						</tr>
 						<tr>
-							<td>log(n, m)</td>
-							<td>Логарифм с основанием m</td>
-							<td style="background:#FF000018;">O(log<sup>2</sup> n)</td>
+							<td>log(a, b)</td>
+							<td>Логарифм с основанием b</td>
+							<td style="background:#FF000018;">O(log<sup>2</sup> a)</td>
 						</tr>
 						<tr>
-							<td>ln(n)</td>
+							<td>ln(a)</td>
 							<td>Натуральный логарифм</td>
-							<td style="background:#FF000018;">O(log<sup>2</sup> n)</td>
+							<td style="background:#FF000018;">O(log<sup>2</sup> a)</td>
 						</tr>
 						<tr class="topline topline2">
-							<td>exp(n)</td>
-							<td>Экспонента <var>e<sup>n</sup></var></td>
-							<td style="background:#FF000018;">O(inv_fact(1/eps) ∙ log n)</td>
+							<td>exp(a)</td>
+							<td>Экспонента <var>e<sup>a</sup></var></td>
+							<td style="background:#FF000018;">O(inv_fact(1/eps) ∙ log a)</td>
 						</tr>
 						<tr class="topline topline2">
-							<td>fact(n)</td>
-							<td>Факториал <var>n!</var><br>Для вещественных чисел использует аппроксимацию, что даёт погрешность в ~20 знаков</td>
-							<td style="background:#FF000018;">O(n<sup>2</sup>)</td>
+							<td>fact(a)</td>
+							<td>Факториал <var>a!</var><br>Для вещественных чисел использует аппроксимацию, что даёт погрешность в ~20 знаков</td>
+							<td style="background:#FF000018;">O(a<sup>2</sup>)</td>
 						</tr>
 						<tr class="topline topline2">
-							<td>gcd(n,m)</td>
+							<td>gcd(a,b)</td>
 							<td>Наибольший общий делитель</td>
-							<td style="background:#00FF0018;">O(log max(n,m))</td>
+							<td style="background:#00FF0018;">O(log max(a,b))</td>
 						</tr>
 						<tr>
-							<td>lcm(n,m)</td>
+							<td>lcm(a,b)</td>
 							<td>Наименьшее общее кратное</td>
-							<td style="background:#00FF0018;">O(log max(n,m))</td>
+							<td style="background:#00FF0018;">O(log max(a,b))</td>
 						</tr>
 						<tr class="topline topline2">
-							<td>fib(n)</td>
-							<td>n-е число последовательности Фибоначчи</td>
-							<td style="background:#FF000018;">O(log<sup>2</sup> n)</td>
+							<td>fib(a)</td>
+							<td>a-е число последовательности Фибоначчи</td>
+							<td style="background:#FF000018;">O(log<sup>2</sup> a)</td>
 						</tr>
 						<tr class="topline topline2">
-							<td>isprime(n)</td>
-							<td>Возвращает 1 или 0 в зависимости от простоты n</td>
-							<td style="background:#FF000018;">O(log<sup>3</sup> n)</td>
+							<td>isprime(a)</td>
+							<td>Возвращает 1 или 0 в зависимости от простоты <var>a</var></td>
+							<td style="background:#FF000018;">O(log<sup>3</sup> a)</td>
 						</tr>
 						
 						
@@ -2002,7 +2072,7 @@ cl_add_function('cube',(a,w)=>{
 				<div style="background: #444446;color:rgb(255,255,255);border: 1px solid rgb(127,127,127);border-radius: 3px;margin: 10px;overflow-x: auto;overflow-y: hidden;display: inline-flex;width: 425px;"><pre id="output" style="margin: 3px;"></pre></div><button onclick="onupdate(-1)" style="background:rgb(68,68,70);color:rgb(255,255,255);border-radius: 11px;">Копировать</button>
 				<div style="background: #444446;color:rgb(255,255,255);border: 1px solid rgb(127,127,127);border-radius: 3px;margin: 10px;overflow-x: auto;overflow-y: hidden;"><pre id="output2" style="margin: 3px;"></pre></div>
 				<h3 style="margin: 0px;  margin-top: 30px;text-align: center;">
-					<input style="border-radius: 4px;margin: 4px;font-size: 16px;background:rgb(68,68,70);color:rgb(255,255,255);width: 36px;" type="number" id="needbase" min="2" max="16" value="2">-ричная <button onclick="onupdate(-2)" style="background:rgb(68,68,70);color:rgb(255,255,255);margin-left: 15px;border-radius: 11px;">Копировать</button>
+					<input style="border-radius: 4px;margin: 4px;font-size: 16px;background:rgb(68,68,70);color:rgb(255,255,255);width: 36px;" type="number" id="needbase" min="1" max="16" value="2">-ричная <button onclick="onupdate(-2)" style="background:rgb(68,68,70);color:rgb(255,255,255);margin-left: 15px;border-radius: 11px;">Копировать</button>
 				</h3>
 				<div style="background: #444446;color:rgb(255,255,255);border: 1px solid rgb(127,127,127);border-radius: 3px;margin: 10px;overflow-x: auto;overflow-y: hidden;"><pre id="output_bin" style="margin: 3px;"></pre></div>
 				<h3 style="margin: 0px;  margin-top: 30px;text-align: center;">Экспоненциальная запись числа <button onclick="onupdate(-3)" style="background:rgb(68,68,70);color:rgb(255,255,255);margin-left: 15px;border-radius: 11px;">Копировать</button></h3>
@@ -2019,6 +2089,6 @@ cl_add_function('cube',(a,w)=>{
 				<div  style="background: #444446;color:rgb(255,255,255);border: 1px solid rgb(127,127,127);border-radius: 3px;margin: 10px;overflow-x: auto;overflow-y: hidden;"><pre id="programm" style="margin: 3px;"></pre></div>
 			</div>
 		</div>
-		<div style="font-size: 11px;text-align: center;background: #444446;color:rgb(255,255,255);border: 1px solid rgb(127,127,127);border-radius: 3px;margin: 10px;position: absolute;width: 24px;height: 15px;right: 0px;bottom: 0px;">v1.0</div>
+		<div style="font-size: 11px;text-align: center;background: #444446;color:rgb(255,255,255);border: 1px solid rgb(127,127,127);border-radius: 3px;margin: 10px;position: absolute;width: 24px;height: 15px;right: 0px;bottom: 0px;">v1.1</div>
 	</body>
 </html>

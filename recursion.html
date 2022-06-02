@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>WebKumir</title>
+    <title>Фрактал</title>
 	<link rel="shortcut icon" type="image/x-icon" href="tileset/favicon.ico" />
 	<link rel="icon" type="image/x-icon" href="tileset/favicon.ico" />
 	<script type="text/javascript">
@@ -54,6 +54,8 @@
 						x = e.changedTouches[0].clientX - rect.left;
 						y = e.changedTouches[0].clientY - rect.top;
 					}
+			x=Math.round(x);
+			y=Math.round(y);
 			return (x + ':' + y);
 		}
 //library---library---library---library---library---library---library
@@ -67,7 +69,7 @@
 
 		var pos_text, canvas, ctx;
 		var onen=10n**30n;
-		var posX = 5n*onen/10n, posY = 5n*onen/10n, posZ = onen;
+		var posX = 5n*onen/10n, posY = 5n*onen/10n, posZ = onen, all_tileset_info = [];
 		
 		function onload()
 		{
@@ -100,6 +102,25 @@
 				canvas.attachEvent("onmousewheel", mouse_wheel);
 			}
 			
+			for (var i=0;i<10;i++)
+			{
+				all_tileset_info.push({});
+				all_tileset_info[i].color= "#" + Math.floor(Math.random()*16777215).toString(16);
+				all_tileset_info[i].recurs=[];
+				for(var j=0;j<25;j++)
+				{
+					all_tileset_info[i].recurs[j]=[];
+					all_tileset_info[i].recurs[j].push([]);
+					for(var k=0;k<25;k++)
+					{
+						do{
+							all_tileset_info[i].recurs[j][k]=Math.floor(Math.random()*10);
+						} while(all_tileset_info[i].recurs[j][k]==i)
+					}
+				}
+			}
+			
+			pool_update();
 			pr_pos();
 			requestAnimationFrame(render);
 		}
@@ -129,6 +150,7 @@
 			}
 			pr_pos();
 			e.preventDefault ? e.preventDefault() : (e.returnValue = false);
+			pool_update();
 		}
 		function mouse_down(e)
 		{
@@ -136,6 +158,7 @@
 			mouselastX = parseFloat(getPosition(e).split(':')[0]);
 			mouselastY = parseFloat(getPosition(e).split(':')[1]);
 			mouse_move(e);
+			pool_update();
 		}
 		function mouse_move(e)
 		{
@@ -154,6 +177,7 @@
 			if (mousestatus == true)
 				pr_pos();
 			mousestatus = false;
+			pool_update();
 		}
 		function BigIntToStr(n)
 		{
@@ -166,20 +190,65 @@
 		function pr_pos()
 		{
 			//console.log(posX,posY,posZ);
-			pool_update();
 			pos_text.innerHTML='X: <input type="text" style="vertical-align:middle;width:calc(100% - 50px);" value="'+BigIntToStr(posX)+'"><br>Y: <input style="vertical-align:middle;width:calc(100% - 50px);" type="text" value="'+BigIntToStr(posY)+'"><br>Z: <input style="vertical-align:middle;width:calc(100% - 50px);" type="text" value="'+BigIntToStr(posZ)+'">';
+		}
+		function rectanglesIntersect(minAx, minAy, maxAx, maxAy, minBx, minBy, maxBx, maxBy) {
+			if (minAx>maxAx)
+				console.log('err');
+			return maxAx >= minBx && minAx <= maxBx && minAy <= maxBy && maxAy >= minBy;
 		}
 		function pool_update()
 		{
+			var stack=[[0,-5n*onen/10n, -5n*onen/10n, onen/10n]];
 			draw_pool=[];
-			draw_pool.push([-5n*onen/10n, -5n*onen/10n, onen, onen, "#AAA"]);
-			var k=onen/100n;
-			while (k>0n)
+			var t=1000;
+			while (stack.length)
 			{
-				draw_pool.push([-5n*onen/10n, -5n*onen/10n, k, k, "#FFF"]);
-				draw_pool.push([-5n*onen/10n, -5n*onen/10n, k/10n, k/10n, "#000"]);
-				k/=100n;
+				//var index = Math.floor(Math.random()*stack.length);
+				//var e=stack[index];
+				//stack.splice( index, 1 );
+				if (!(t--))break;
+				var e=stack.shift();
+				if (!rectanglesIntersect(-posX-posZ/2n,-posY-posZ/2n,-posX+posZ/2n,-posY+posZ/2n,e[1],e[2],e[1]+e[3],e[2]+e[3]))  // не отрисовывается 
+				{
+					//console.log('1');
+					continue;
+				}
+				draw_pool.push([e[1], e[2], e[3], e[3], all_tileset_info[e[0]].color]);
+				if (posZ/e[3]>50n)  // слишком маленький
+				{
+					//draw_pool.push([e[1], e[2], e[3], e[3], all_tileset_info[e[0]].color]);
+					//console.log('2');
+					continue;
+				}
+				for (var i=0;i<25;i++)
+				{
+					for (var j=0;j<25;j++)
+					{
+						var e2=[all_tileset_info[e[0]].recurs[i][j],e[1]+e[3]*BigInt(i)/25n,e[2]+e[3]*BigInt(j)/25n,e[3]/25n];
+						if (rectanglesIntersect(-posX-posZ/2n,-posY-posZ/2n,-posX+posZ/2n,-posY+posZ/2n,e2[1],e2[2],e2[1]+e2[3],e2[2]+e2[3]))
+							stack.push(e2);
+					}
+				}
+				//	continue;
+				/*var k=onen/100n;
+				while (k>0n)
+				{
+					draw_pool.push([-5n*onen/10n, -5n*onen/10n, k, k, "#FFF"]);
+					draw_pool.push([-5n*onen/10n, -5n*onen/10n, k/10n, k/10n, "#000"]);
+					k/=100n;
+				}*/
 			}
+			draw_pool.sort(function (a, b) {
+				if (a[4] > b[4]) {
+					return 1;
+				}
+				if (a[4] < b[4]) {
+					return -1;
+				}
+				// a должно быть равным b
+				return 0;
+			});
 		}
 		var draw_pool=[];
 		function render()
@@ -192,16 +261,20 @@
 			scale = BigInt(Math.round(Math.max(canvas.width,canvas.height)));
 			ctx.fillStyle = "#4f51bf";
 			ctx.fillRect(0, 0, canvas.width, canvas.height);
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
 			for (var i=0;i<draw_pool.length;i++)
 			{
-				ctx.fillStyle = draw_pool[i][4];
+				if (ctx.fillStyle != draw_pool[i][4])
+					ctx.fillStyle = draw_pool[i][4];
 				DrawMyRect(draw_pool[i][0], draw_pool[i][1], draw_pool[i][2], draw_pool[i][3]);
 			}
 			requestAnimationFrame(render);
 		}
 		function BigInt2Num(n) {return Number(10000n*n/onen)/10000};
 		function DrawMyRect(a, b, c, d, color) {
+			if (c/posZ>100n)
+				return;
+			if (d/posZ>100n)
+				return;
 			ctx.fillRect(BigInt2Num((posX+a)*onen*scale/posZ)+canvas.width/2, BigInt2Num((posY+b)*onen*scale/posZ)+canvas.height/2, BigInt2Num(c*onen*scale/posZ), BigInt2Num(d*onen*scale/posZ));
 		}
 	</script>

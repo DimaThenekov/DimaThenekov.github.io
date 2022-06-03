@@ -207,27 +207,30 @@
 				//var index = Math.floor(Math.random()*stack.length);
 				//var e=stack[index];
 				//stack.splice( index, 1 );
-				if (!(t--))break;
+				//if (!(t--))break;
 				var e=stack.shift();
-				if (!rectanglesIntersect(-posX-posZ/2n,-posY-posZ/2n,-posX+posZ/2n,-posY+posZ/2n,e[1],e[2],e[1]+e[3],e[2]+e[3]))  // не отрисовывается 
-				{
+				//if (!rectanglesIntersect(-posX-posZ/2n,-posY-posZ/2n,-posX+posZ/2n,-posY+posZ/2n,e[1],e[2],e[1]+e[3],e[2]+e[3]))  // не отрисовывается 
+				//{
 					//console.log('1');
-					continue;
-				}
+				//	continue;
+				//}
 				draw_pool.push([e[1], e[2], e[3], e[3], all_tileset_info[e[0]].color]);
-				if (posZ/e[3]>50n)  // слишком маленький
-				{
+				//if (posZ/e[3]>50n)  // слишком маленький
+				//{
 					//draw_pool.push([e[1], e[2], e[3], e[3], all_tileset_info[e[0]].color]);
 					//console.log('2');
+				//	continue;
+				//}
+				if (posZ/(e[3]/25n)>60n)
 					continue;
-				}
 				for (var i=0;i<25;i++)
 				{
 					for (var j=0;j<25;j++)
 					{
 						var e2=[all_tileset_info[e[0]].recurs[i][j],e[1]+e[3]*BigInt(i)/25n,e[2]+e[3]*BigInt(j)/25n,e[3]/25n];
+						//	break;
 						if (rectanglesIntersect(-posX-posZ/2n,-posY-posZ/2n,-posX+posZ/2n,-posY+posZ/2n,e2[1],e2[2],e2[1]+e2[3],e2[2]+e2[3]))
-							stack.push(e2);
+								stack.push(e2);
 					}
 				}
 				//	continue;
@@ -239,7 +242,7 @@
 					k/=100n;
 				}*/
 			}
-			draw_pool.sort(function (a, b) {
+			/*draw_pool.sort(function (a, b) {
 				if (a[4] > b[4]) {
 					return 1;
 				}
@@ -248,7 +251,8 @@
 				}
 				// a должно быть равным b
 				return 0;
-			});
+			});*/
+			//draw_pool=[];
 		}
 		var draw_pool=[];
 		function render()

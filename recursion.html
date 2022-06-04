@@ -204,6 +204,7 @@
 			}
 			pr_pos();
 			pool_update();
+			render();
 		}
 		function mouse_down(e)
 		{
@@ -212,6 +213,7 @@
 			mouselastY = parseFloat(getPosition(e).split(':')[1]);
 			mouse_move(e);
 			pool_update();
+			render();
 		}
 		function mouse_move(e)
 		{
@@ -224,6 +226,7 @@
 			}
 			mouselastX = positionx;
 			mouselastY = positiony;
+			render();
 		}
 		function mouse_up(e)
 		{
@@ -231,6 +234,7 @@
 				pr_pos();
 			mousestatus = false;
 			pool_update();
+			render()
 		}
 		function BigIntToStr(n)
 		{
@@ -307,6 +311,7 @@
 				return 0;
 			});*/
 			//draw_pool=[];
+			render();
 		}
 		var draw_pool=[];
 		function render()
@@ -328,7 +333,7 @@
 					//	ctx.fillStyle = draw_pool[i][4];
 					DrawMyImg(draw_pool[i][0], draw_pool[i][1], draw_pool[i][2], draw_pool[i][3], draw_pool[i][4], draw_pool[i][5]);
 				}
-			requestAnimationFrame(render);
+			//requestAnimationFrame(render);
 		}
 		function BigInt2Num(n) {return Number(10000n*n/onen)/10000};
 		function DrawMyImg(a, b, c, d, x, y) {

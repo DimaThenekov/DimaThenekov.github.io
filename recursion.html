@@ -71,6 +71,7 @@
 		var onen=10n**30n;
 		var posX = BigInt(Math.floor(Math.random()*10000))*onen/1000000n, posY = BigInt(Math.floor(Math.random()*10000))*onen/1000000n, posZ = onen/4n*5n, all_tileset_info = [];
 		var i_img = new Image(), i_img_loaded=!1, canvas2, ctx2, canvas3, ctx3;
+		var need_render=!1,need_pool_update=!1;
 		i_img.onload = function() {
 			i_img_loaded=!0;
 		};
@@ -151,7 +152,7 @@
 				
 			console.log(rec_info);
 			
-			pool_update();
+			need_pool_update=!0;
 			pr_pos();
 			document.getElementById('loading_text').innerHTML='Готово';
 			setTimeout(function f(){document.getElementById("load_div_id").style.opacity=".9";},50);
@@ -203,8 +204,7 @@
 				posZ*=10n;
 			}
 			pr_pos();
-			pool_update();
-			render();
+			need_pool_update=!0;
 		}
 		function mouse_down(e)
 		{
@@ -212,8 +212,7 @@
 			mouselastX = parseFloat(getPosition(e).split(':')[0]);
 			mouselastY = parseFloat(getPosition(e).split(':')[1]);
 			mouse_move(e);
-			pool_update();
-			render();
+			need_pool_update=!0;
 		}
 		function mouse_move(e)
 		{
@@ -223,18 +222,17 @@
 				posX+=BigInt(positionx - mouselastX)*posZ/scale;
 				posY+=BigInt(positiony - mouselastY)*posZ/scale;
 				pr_pos();
+				need_render=!0;
 			}
 			mouselastX = positionx;
 			mouselastY = positiony;
-			render();
 		}
 		function mouse_up(e)
 		{
 			if (mousestatus == true)
 				pr_pos();
 			mousestatus = false;
-			pool_update();
-			render()
+			need_pool_update=!0;
 		}
 		function BigIntToStr(n)
 		{
@@ -256,15 +254,16 @@
 		}
 		function pool_update()
 		{
+			need_pool_update=!1;
 			var stack=[[0,-5n*onen/10n, -5n*onen/10n, onen]];
 			draw_pool=[];
-			var t=1000;
+			var t=1000000;
 			while (stack.length)
 			{
 				//var index = Math.floor(Math.random()*stack.length);
 				//var e=stack[index];
 				//stack.splice( index, 1 );
-				//if (!(t--))break;
+				if (!(t--))break;
 				var e=stack.shift();
 				//if (!rectanglesIntersect(-posX-posZ/2n,-posY-posZ/2n,-posX+posZ/2n,-posY+posZ/2n,e[1],e[2],e[1]+e[3],e[2]+e[3]))  // не отрисовывается 
 				//{
@@ -311,29 +310,39 @@
 				return 0;
 			});*/
 			//draw_pool=[];
-			render();
+			need_render=!0;
 		}
 		var draw_pool=[];
+		var last_need_pool_update=new Date();
 		function render()
 		{
 			//pos_text.innerHTML='123';
-			if (canvas.clientHeight != canvas.height || canvas.clientWidth != canvas.width) {
-				canvas.height = canvas.clientHeight;
-				canvas.width = canvas.clientWidth;
+			if (need_pool_update && new Date()-last_need_pool_update>100)
+			{
+				last_need_pool_update=new Date();
+				pool_update();
 			}
-			scale = BigInt(Math.round(Math.max(canvas.width,canvas.height)));
-			ctx.fillStyle = "#4f51bf";
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
-			//if (i_img_loaded)
-				//ctx.drawImage(i_img, 0, 0);
-			if (i_img_loaded)
-				for (var i=0;i<draw_pool.length;i++)
-				{
-					//if (ctx.fillStyle != draw_pool[i][4])
-					//	ctx.fillStyle = draw_pool[i][4];
-					DrawMyImg(draw_pool[i][0], draw_pool[i][1], draw_pool[i][2], draw_pool[i][3], draw_pool[i][4], draw_pool[i][5]);
+			if (need_render)
+			{
+				need_render=!1;
+				if (canvas.clientHeight != canvas.height || canvas.clientWidth != canvas.width) {
+					canvas.height = canvas.clientHeight;
+					canvas.width = canvas.clientWidth;
 				}
-			//requestAnimationFrame(render);
+				scale = BigInt(Math.round(Math.max(canvas.width,canvas.height)));
+				ctx.fillStyle = "#4f51bf";
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+				//if (i_img_loaded)
+					//ctx.drawImage(i_img, 0, 0);
+				if (i_img_loaded)
+					for (var i=0;i<draw_pool.length;i++)
+					{
+						//if (ctx.fillStyle != draw_pool[i][4])
+						//	ctx.fillStyle = draw_pool[i][4];
+						DrawMyImg(draw_pool[i][0], draw_pool[i][1], draw_pool[i][2], draw_pool[i][3], draw_pool[i][4], draw_pool[i][5]);
+					}
+			}
+			requestAnimationFrame(render);
 		}
 		function BigInt2Num(n) {return Number(10000n*n/onen)/10000};
 		function DrawMyImg(a, b, c, d, x, y) {

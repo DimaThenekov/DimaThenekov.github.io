@@ -1,0 +1,61 @@
+<input type="file" id="fileP" webkitdirectory directory multiple onchange="handleFiles(this.files)">
+<canvas id="canvas" width="500" height="4700" style="height:4700px;width:500px;position: absolute;top: 200px;left: 0%;"></canvas>
+<script>
+	function shuffle(array) {
+	  let currentIndex = array.length,  randomIndex;
+
+	  // While there remain elements to shuffle.
+	  while (currentIndex != 1) {
+
+		// Pick a remaining element.
+		randomIndex = Math.floor(Math.random() * (currentIndex-1))+1;
+		currentIndex--;
+
+		// And swap it with the current element.
+		[array[currentIndex], array[randomIndex]] = [
+		  array[randomIndex], array[currentIndex]];
+	  }
+
+	  return array;
+	}
+	function handleFiles(a)
+	{
+		var canvas = document.getElementById('canvas');
+		var ctx = canvas.getContext("2d", { alpha: false,antialias: false, depth: false,desynchronized:true});		
+		shuffle(a);
+		console.log(a);
+		arr_file={};
+		for (var i=0;i<a.length;i++)
+		{
+			arr_file[a[i].webkitRelativePath.split('/').slice(1).join('/')]=undefined;
+			reader = new FileReader();
+			reader['_Path']=a[i].webkitRelativePath.split('/').slice(1).join('/');
+			reader['_Pos']=i;
+			reader.onload = function(event) {
+					//console.log(event.srcElement.result);
+					arr_file[this['_Path']]=[''+event.srcElement.result,this['_Pos']];
+				};
+			reader.readAsDataURL(a[i]);
+		}
+		function f(){
+			for (var i=0;i<Object.keys(arr_file).length;i++)
+				if (arr_file[Object.keys(arr_file)[i]]==undefined)
+				{
+					setTimeout(f,50);
+					return;
+				} 
+			for (var i=0;i<Object.keys(arr_file).length;i++)
+			{
+				var image = new Image();
+				image.onload = function() {
+				  ctx.drawImage(this, (this._Pos % 5) * 100, Math.floor(this._Pos/5)*100);
+				};
+				image._Pos = 234-arr_file[Object.keys(arr_file)[i]][1];
+				image.src = arr_file[Object.keys(arr_file)[i]][0];
+			}
+			console.log(arr_file);
+		}
+		f();		
+	}
+	
+</script>

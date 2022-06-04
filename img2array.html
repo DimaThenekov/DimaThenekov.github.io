@@ -1,0 +1,144 @@
+<input type="file" id="fileP"  onchange="handleFiles(this.files[0])">
+<canvas id="canvas" width="500" height="4700" style="height:4700px;width:500px;position: absolute;top: 200px;left: 0%;"></canvas>
+<script>
+	function shuffle(array) {
+	  let currentIndex = array.length,  randomIndex;
+
+	  // While there remain elements to shuffle.
+	  while (currentIndex != 1) {
+
+		// Pick a remaining element.
+		randomIndex = Math.floor(Math.random() * (currentIndex-1))+1;
+		currentIndex--;
+
+		// And swap it with the current element.
+		[array[currentIndex], array[randomIndex]] = [
+		  array[randomIndex], array[currentIndex]];
+	  }
+
+	  return array;
+	}
+	function handleFiles(a)
+	{
+		var canvas = document.getElementById('canvas');
+		var ctx = canvas.getContext("2d", { alpha: false,antialias: false, depth: false,desynchronized:true});	
+		console.log(a);
+		reader = new FileReader();
+		reader.onload = function(event) {
+			var image = new Image();
+			image.onload = function() {
+				canvas.width = image.width;
+				canvas.height = image.height;
+				ctx.drawImage(image, 0, 0);
+				var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+				function getPixel(x,y)
+				{
+					var index = (y*imageData.width + x) * 4;
+					var red = imageData.data[index];
+					var green = imageData.data[index + 1];
+					var blue = imageData.data[index + 2];
+					var alpha = imageData.data[index + 3];
+					return [red, green, blue];
+				}
+				var images=[];
+				for (var j=0;j<47;j++)
+				{
+					images[j]=[];
+					for (var i=0;i<5;i++)
+					{
+						images[j][i]=[[[0n,0n,0n,0n],[0n,0n,0n,0n],[0n,0n,0n,0n],[0n,0n,0n,0n]],[[0n,0n,0n,0n],[0n,0n,0n,0n],[0n,0n,0n,0n],[0n,0n,0n,0n]],[[0n,0n,0n,0n],[0n,0n,0n,0n],[0n,0n,0n,0n],[0n,0n,0n,0n]],[[0n,0n,0n,0n],[0n,0n,0n,0n],[0n,0n,0n,0n],[0n,0n,0n,0n]]];
+						for (var j2=0;j2<100;j2++)
+							for (var i2=0;i2<100;i2++)
+							{
+								var pix=getPixel(i*100+i2,j*100+j2);
+								for (var k=0;k<3;k++)
+									images[j][i][Math.floor(j2/25)][Math.floor(i2/25)][k]+=BigInt(pix[k]);
+								images[j][i][Math.floor(j2/25)][Math.floor(i2/25)][3]++;
+							}
+						for (var j2=0;j2<4;j2++)
+							for (var i2=0;i2<4;i2++)
+							{
+								for (var k=0;k<3;k++)
+									images[j][i][j2][i2][k]/=images[j][i][j2][i2][3];
+								for (var k=0;k<3;k++)
+									images[j][i][j2][i2][k]=Number(images[j][i][j2][i2][k]);
+								images[j][i][j2][i2].pop();
+							}
+					}
+				}
+				function comp_part44(a,b)
+				{
+					var sum=0;
+					for (var j=0;j<4;j++)
+						for (var i=0;i<4;i++)
+							for (var k=0;k<3;k++)
+							{
+								sum+=(a[j][i][k]-b[j][i][k])**2;
+							}
+					return sum;
+				}
+				var recimg=[];
+				for (var j=0;j<47;j++)
+					for (var i=0;i<5;i++)
+					{
+						recimg.push([]);
+						var thisimg=recimg[recimg.length-1];
+						for (var j2=0;j2<25;j2++)
+						{
+							thisimg.push([]);
+							for (var i2=0;i2<25;i2++)
+							{
+								var part44=[[],[],[],[]];
+								for (var j3=0;j3<4;j3++)
+									for (var i3=0;i3<4;i3++)
+									{
+										part44[j3][i3]=getPixel(i*100+i2*4+i3,j*100+j2*4+j3);
+									}
+								var best=[]; 
+								for (var j3=0;j3<47;j3++)
+									for (var i3=0;i3<5;i3++)
+									if (!(j==j3&&i==i3))
+									{
+										best.push([j3*5+i3,comp_part44(part44,images[j3][i3])]);
+									}
+								var bestind=0;
+								best.sort((a,b)=>a[1]-b[1]);
+								while (Math.random()>0.3)
+									bestind++;
+								thisimg[thisimg.length-1].push(best[bestind][0]);
+							}
+						}
+					}
+				console.log(images);
+				console.log(recimg);
+				var s='';
+				for (var i=0;i<recimg.length;i++)
+				{
+					for (var j=0;j<25;j++)
+					{
+						for (var k=0;k<25;k++)
+						{
+							s+=recimg[i][j][k].toString(16);
+							if (k!=24)
+								s+=' ';
+						}
+						if (j!=24)
+							s+=':';
+					}
+					if (i!=recimg.length-1)
+						s+=';';
+				}
+				console.log(s);
+				for(var i=0;i<250;i++)
+					if(s.indexOf(' '+i.toString(16)+' ')<0)
+					  console.log('err '+i);
+				//console.log(getPixel(0,0));
+			};
+			image.src = event.srcElement.result;
+
+		};
+		reader.readAsDataURL(a);
+		
+	}
+	
+</script>

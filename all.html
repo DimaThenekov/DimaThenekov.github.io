@@ -78,6 +78,14 @@
 				var b = colorChannelMixer(rgbA[2],rgbB[2],amountToMix);
 				return "rgb("+r+","+g+","+b+")";
 			}
+			var _errors=[];function copyToClipboard(text){if(window.clipboardData&&window.clipboardData.setData){return window.clipboardData.setData("Text",text);}
+			else if(document.queryCommandSupported&&document.queryCommandSupported("copy")){var textarea=document.createElement("textarea");textarea.textContent=text;textarea.style.position="fixed";document.body.appendChild(textarea);textarea.select();try{return document.execCommand("copy");}
+			catch(ex){console.warn("Copy to clipboard failed.",ex);return prompt("Copy to clipboard: Ctrl+C, Enter",text);}
+			finally{document.body.removeChild(textarea);}}}
+			function _onerror(e,e2)
+			{if(_errors.length==0)
+			setTimeout(function(){alert(JSON.stringify(_errors));copyToClipboard(JSON.stringify(_errors));},1500);_errors.push([e,e2]);}
+			window.onerror=function(){_onerror(Array.prototype.slice.call(arguments).join('; '),'window.onerror')};
 			
 			
 			

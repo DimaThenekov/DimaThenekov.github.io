@@ -88,42 +88,58 @@
 			window.onerror=function(){_onerror(Array.prototype.slice.call(arguments).join('; '),'window.onerror')};
 			
 			
-			
 			var buttons=[];
+			var cacheCanvas={};
 			function drawButton(ctx,x,y,h,w,v,style,num){
+				if (num==0) Object.keys(cacheCanvas).filter((x)=>new Date - cacheCanvas[x][1]>2000).forEach((x)=>{delete cacheCanvas[x];});
 				switch(style) {
 				  case 1: 
-					var gradient = ctx.createLinearGradient(x,0, x+h,0);
-					gradient.addColorStop(0, '#AAA');
-					gradient.addColorStop(.1, colorMixer([221,221,221],[221,170,170],1-constrain(v,0,1)));
-					gradient.addColorStop(.9, colorMixer([221,221,221],[221,170,170],1-constrain(v,0,1)));
-					gradient.addColorStop(1, colorMixer([187,187,187],[187,119,119],1-constrain(v,0,1)));
-					ctx.fillStyle = "#000000";
-					ctx.strokeStyle = gradient;
-					ctx.lineWidth = 15;
-					roundRect(ctx,x,y,x+h,y+w,8);
-					gradient = ctx.createLinearGradient(x,0, x+h,0);
-					gradient.addColorStop(0, '#400');
-					gradient.addColorStop(.03, '#800');
-					gradient.addColorStop(.97, '#800');
-					gradient.addColorStop(1, '#400');
-					ctx.fillStyle = gradient;
-					ctx.strokeStyle = gradient;
-					ctx.lineWidth = 1;
-					roundRect(ctx,x,y-w*v*0.7,x+h,y+w,8);
-					gradient = ctx.createLinearGradient(x,0, x+h,0);
-					gradient.addColorStop(0, '#B00');
-					gradient.addColorStop(.8, '#F00');
-					gradient.addColorStop(1, '#B00');
-					ctx.fillStyle = gradient;
-					ctx.strokeStyle = "#D00";
-					ctx.lineWidth = 3;
-					roundRect(ctx,x,y-w*v,x+h,y+w-w*v*0.7,14);
+					var s='sty:'+style+';h:'+Math.floor(h)+';w:'+Math.floor(w)+';v:'+Math.floor(v*1000);
+					if (cacheCanvas[s]===undefined){
+						cacheCanvas[s] = [document.createElement('canvas'),0];
+						cacheCanvas[s][0].width = h*3;
+						cacheCanvas[s][0].height = w*4;
+						var _old=[ctx,x,y]
+						var ctx = cacheCanvas[s][0].getContext("2d");
+						x=h;
+						y=w*2;
+						var gradient = ctx.createLinearGradient(x,0, x+h,0);
+						gradient.addColorStop(0, '#AAA');
+						gradient.addColorStop(.1, colorMixer([221,221,221],[221,170,170],1-constrain(v,0,1)));
+						gradient.addColorStop(.9, colorMixer([221,221,221],[221,170,170],1-constrain(v,0,1)));
+						gradient.addColorStop(1, colorMixer([187,187,187],[187,119,119],1-constrain(v,0,1)));
+						ctx.fillStyle = "#000000";
+						ctx.strokeStyle = gradient;
+						ctx.lineWidth = 15;
+						roundRect(ctx,x,y,x+h,y+w,8);
+						gradient = ctx.createLinearGradient(x,0, x+h,0);
+						gradient.addColorStop(0, '#400');
+						gradient.addColorStop(.03, '#800');
+						gradient.addColorStop(.97, '#800');
+						gradient.addColorStop(1, '#400');
+						ctx.fillStyle = gradient;
+						ctx.strokeStyle = gradient;
+						ctx.lineWidth = 1;
+						roundRect(ctx,x,y-w*v*0.7,x+h,y+w,8);
+						gradient = ctx.createLinearGradient(x,0, x+h,0);
+						gradient.addColorStop(0, '#B00');
+						gradient.addColorStop(.8, '#F00');
+						gradient.addColorStop(1, '#B00');
+						ctx.fillStyle = gradient;
+						ctx.strokeStyle = "#D00";
+						ctx.lineWidth = 3;
+						roundRect(ctx,x,y-w*v,x+h,y+w-w*v*0.7,14);
+						ctx=_old[0];
+						x=_old[1];
+						y=_old[2];
+					}
+					cacheCanvas[s][1]=new Date;
+					ctx.drawImage(cacheCanvas[s][0], x-1*h, y-2*w);
 					ctx.textAlign = 'center';
 					ctx.textBaseline = 'middle';
+					ctx.font = Math.floor(w*0.3)+'px Arial';
 					for (var i=4;i>=0;i-=1){
 						ctx.fillStyle = 'hsl(25,100%,'+(70-4*i)+'%)';
-						ctx.font = Math.floor(w*0.3)+'px Arial';
 						ctx.fillText(hitboxs[num][8], x+h/2+i/9,y+w/2-w*v+i);
 					}
 					
@@ -140,31 +156,45 @@
 						hitboxs[num][5]=1;
 					break;
 				  case 2: 
-					var gradient = ctx.createLinearGradient(0,y+w-w*v*0.7, 0,y+w);
-					gradient.addColorStop(0, 'hsl(199,92%,70%)');
-					//gradient.addColorStop(.03, '#800');
-					//gradient.addColorStop(.97, '#800');
-					gradient.addColorStop(1, 'hsl(199,92%,40%)');
-					ctx.fillStyle = gradient;
-					ctx.strokeStyle = gradient;
-					ctx.lineWidth = 1;
-					roundRect(ctx,x,y-w*v*0.7,x+h,y+w,20);
-					gradient = ctx.createLinearGradient(0,y-w*v, 0,y+w-w*v*0.7);
-					gradient.addColorStop(0, 'hsl(199,92%,70%)');
-					//gradient.addColorStop(.8, '#');
-					gradient.addColorStop(1, 'hsl(199,92%,50%)');
-					ctx.fillStyle = gradient;
-					ctx.strokeStyle = 'hsl(199,92%,60%)';
-					ctx.lineWidth = 2;
-					roundRect(ctx,x,y-w*v,x+h,y+w-w*v*0.7,20);
-					
+					var s='sty:'+style+';h:'+Math.floor(h)+';w:'+Math.floor(w)+';v:'+Math.floor(v*50);
+					if (cacheCanvas[s]===undefined){
+						cacheCanvas[s] = [document.createElement('canvas'),0];
+						cacheCanvas[s][0].width = h*3;
+						cacheCanvas[s][0].height = w*4;
+						var _old=[ctx,x,y]
+						var ctx = cacheCanvas[s][0].getContext("2d");
+						x=h;
+						y=w*2;
+						var gradient = ctx.createLinearGradient(0,y+w-w*v*0.7, 0,y+w);
+						gradient.addColorStop(0, 'hsl(199,92%,70%)');
+						//gradient.addColorStop(.03, '#800');
+						//gradient.addColorStop(.97, '#800');
+						gradient.addColorStop(1, 'hsl(199,92%,40%)');
+						ctx.fillStyle = gradient;
+						ctx.strokeStyle = gradient;
+						ctx.lineWidth = 1;
+						roundRect(ctx,x,y-w*v*0.7,x+h,y+w,20);
+						gradient = ctx.createLinearGradient(0,y-w*v, 0,y+w-w*v*0.7);
+						gradient.addColorStop(0, 'hsl(199,92%,70%)');
+						//gradient.addColorStop(.8, '#');
+						gradient.addColorStop(1, 'hsl(199,92%,50%)');
+						ctx.fillStyle = gradient;
+						ctx.strokeStyle = 'hsl(199,92%,60%)';
+						ctx.lineWidth = 2;
+						roundRect(ctx,x,y-w*v,x+h,y+w-w*v*0.7,20);
+						ctx=_old[0];
+						x=_old[1];
+						y=_old[2];
+					}
+					cacheCanvas[s][1]=new Date;
+					ctx.drawImage(cacheCanvas[s][0], x-1*h, y-2*w);
 					
 					hitboxs[num][0]=x;
 					hitboxs[num][1]=y-w*1;
 					hitboxs[num][2]=h;
 					hitboxs[num][3]=w+w*1;
-					while (hitboxs[num][7].length<4)
-						hitboxs[num][7].push(computePID(hitboxs[num][4],hitboxs[num][5]+0.01*Math.sin((new Date)/300),0.1,0.1,0.1,1,-2,2,num));
+					while (hitboxs[num][7].length<5)
+						hitboxs[num][7].push(computePID(hitboxs[num][4],hitboxs[num][5]+0.01*Math.sin((new Date)/300),0.05,0.05,0.05,1,-2,2,num));
 					hitboxs[num][4]=constrain(hitboxs[num][4]+hitboxs[num][7].shift()/8,0.1,2);
 					var e=hitboxs[num];
 					if (hitboxs[num][5]>0.5 && (new Date)-hitboxs[num][6]>50 || !containPoint(e[0],e[1],e[2],e[3],mouselastX,mouselastY))
@@ -202,6 +232,7 @@
 				}
 				hitboxs.push([0,0,0,0,1,1,new Date,[],x,y,new Date]);
 			}
+			var backgroundCanv=[0,0];
 			function render()
 			{
 				if (canvas.clientHeight != canvas.height || canvas.clientWidth != canvas.width) {
@@ -212,15 +243,25 @@
 				//ctx.fillRect(0, 0, canvas.width, canvas.height);
 				var cW = canvas.width, cH = canvas.height;
 				var mWH = Math.min(cW,cH);
-				var gradient = ctx.createLinearGradient(0,0, cW, cH); for (var i=0;i<36;i++) gradient.addColorStop(i/36, 'hsl(199,92%,'+(40-4*i/10)+'%)');
-				ctx.fillStyle = gradient;
-				ctx.fillRect(0, 0, canvas.width, canvas.height);
-				for (var i=10;i>=0;i-=1){
-					gradient = ctx.createLinearGradient(cW, cH, 0, 0); for (var j=0;j<36;j++) gradient.addColorStop(j/36, 'hsl(199,92%,'+(81-4*i-j*0.7)+'%)');
-					ctx.fillStyle = gradient;
-					ctx.strokeStyle = gradient;
-					roundRect(ctx,cW/2-mWH*0.3+i/3,cH/2-mWH*0.2+3*i,cW/2+mWH*0.3+i/3,cH/2+mWH*0.2+3*i,8);
+				if (backgroundCanv[0]!=cW || backgroundCanv[1]!=cH || backgroundCanv[2]==undefined)
+				{
+					backgroundCanv[0]=cW;
+					backgroundCanv[1]=cH;
+					backgroundCanv[2] = document.createElement('canvas');
+					backgroundCanv[2].width = backgroundCanv[0];
+					backgroundCanv[2].height = backgroundCanv[1];
+					var _ctx = backgroundCanv[2].getContext("2d");
+					var gradient = _ctx.createLinearGradient(0,0, cW, cH); for (var i=0;i<36;i++) gradient.addColorStop(i/36, 'hsl(199,92%,'+(35-4*i/10)+'%)');
+					_ctx.fillStyle = gradient;
+					_ctx.fillRect(0, 0, canvas.width, canvas.height);
+					for (var i=10;i>=0;i-=1){
+						gradient = _ctx.createLinearGradient(cW, cH, 0, 0); for (var j=0;j<36;j++) gradient.addColorStop(j/36, 'hsl(199,92%,'+(81-4*i-j*0.7)+'%)');
+						_ctx.fillStyle = gradient;
+						_ctx.strokeStyle = gradient;
+						roundRect(_ctx,cW/2-mWH*0.3+i/3,cH/2-mWH*0.2+3*i,cW/2+mWH*0.3+i/3,cH/2+mWH*0.2+3*i,8);
+					}
 				}
+				ctx.drawImage(backgroundCanv[2], 0, 0);
 				drawButton(ctx, cW/2-mWH*0.25, cH/2+mWH*0.071,  mWH*0.2, mWH*0.2/2, hitboxs[0][4]/2, 1, 0);
 				drawButton(ctx, cW/2+mWH*0.05, cH/2+mWH*0.071,  mWH*0.2, mWH*0.2/2, hitboxs[1][4]/2, 1, 1);
 				ctx.textAlign = 'center';
@@ -289,6 +330,5 @@
 	</head>
 	<body onload="onload();">
 		<canvas id="canvas" width="1920" height="1080" style="height:100%;width:100%;position: absolute;top: 0%;left: 0%;"></canvas>
-    
 	</body>
 </html>

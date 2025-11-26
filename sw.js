@@ -21,7 +21,7 @@ self.addEventListener('fetch', event => {
   }
 
   // Игнорируем запросы к /RunWebBox и сам service worker
-  if (path.startsWith('/RunWebBox') || path.includes('sw.js')) {
+  if (path.startsWith('/AlpineLinuxBuilder') || path.startsWith('/RunWebBox') || path.includes('sw.js')) {
     return;
   }
 
